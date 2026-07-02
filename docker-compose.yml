@@ -1,0 +1,13 @@
+services:
+  api:
+    build:
+      context: ./services/api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./services/api/app:/app/app:ro
+      - ./data:/app/data:ro
+    environment:
+      TUNAGU_RELATION_DATA: /app/data/relations.sample.json
+      TUNAGU_CORS_ORIGINS: "*"
+

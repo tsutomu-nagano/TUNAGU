@@ -1,0 +1,31 @@
+{
+  "relations": [
+    {
+      "source_stats_data_id": "0003448231",
+      "stats_data_id": "0003448221",
+      "title": "人口推計 年次 2020年",
+      "relation_type": "time",
+      "reason": "同じ統計表の時間軸が異なるデータです。",
+      "formats": ["EXCEL", "CSV"],
+      "updated_at": "2026-07-01"
+    },
+    {
+      "source_stats_data_id": "0003448231",
+      "stats_data_id": "0003448242",
+      "title": "人口推計 都道府県別 2021年",
+      "relation_type": "region",
+      "reason": "地域区分が異なる関連データです。",
+      "formats": ["CSV", "DB"],
+      "updated_at": "2026-07-01"
+    },
+    {
+      "source_stats_data_id": "0003448231",
+      "stats_data_id": "0003448250",
+      "title": "人口推計 年齢階級別 2021年",
+      "relation_type": "category",
+      "reason": "分類軸が異なる関連データです。",
+      "formats": ["EXCEL", "CSV", "DB"],
+      "updated_at": "2026-07-01"
+    }
+  ]
+}
