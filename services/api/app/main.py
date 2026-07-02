@@ -1,7 +1,6 @@
 import os
 from io import StringIO
 from functools import lru_cache
-from pathlib import Path
 import csv
 
 from fastapi import FastAPI
@@ -9,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 
 from .models import RelationResponse
-from .repository import RelationRepository
+from .repository import RelationRepository, get_database_url
 
 
 def create_app() -> FastAPI:
@@ -58,8 +57,7 @@ def create_app() -> FastAPI:
 
 @lru_cache
 def get_repository() -> RelationRepository:
-    data_path = Path(os.getenv("TUNAGU_RELATION_DATA", "/app/data/relations.sample.json"))
-    return RelationRepository(data_path)
+    return RelationRepository(get_database_url())
 
 
 app = create_app()

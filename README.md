@@ -6,7 +6,7 @@
 
 ## 機能
 
-- 統計データ ID を起点に、関連する統計データ ID の一覧を返す API
+- PostgreSQL に保存した関連情報から、統計データ ID を起点に関連する統計データ ID の一覧を返す API
 - 関連種別は `time`、`region`、`category`、`successor`、`predecessor`、`other` を想定
 - e-Stat ページに「関連データ」ボタンを追加するブラウザ拡張
 - API から取得した関連データをドロワー表示し、まとめてダウンロード導線を表示
@@ -24,6 +24,7 @@ API:
 - ヘルスチェック: `http://localhost:8000/health`
 - 関連データ API: `http://localhost:8000/v1/stats/0003448231/relations`
 - OpenAPI: `http://localhost:8000/docs`
+- PostgreSQL: `localhost:5432` / database `tunagu` / user `tunagu`
 
 テスト:
 
@@ -40,4 +41,4 @@ docker compose run --rm api pytest
 
 ## データ
 
-初期状態では `data/relations.sample.json` を読み込みます。将来的に DB や e-Stat API から生成した関連データへ差し替える場合も、API のレスポンス形式は維持できます。
+初期状態では `services/api/db/init.sql` が PostgreSQL にサンプルの関連データを投入します。本番では Render Postgres の `DATABASE_URL` を API に設定してください。e-Stat API から生成した関連データへ差し替える場合も、API のレスポンス形式は維持できます。
