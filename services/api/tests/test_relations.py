@@ -22,6 +22,16 @@ def test_get_relations() -> None:
     assert {item["relation_type"] for item in response.json()["related"]} >= {"time", "region"}
 
 
+def test_get_relations_for_statinfid_from_estat_download_link() -> None:
+    client = TestClient(app)
+
+    response = client.get("/v1/stats/000040325905/relations")
+
+    assert response.status_code == 200
+    assert response.json()["stats_data_id"] == "000040325905"
+    assert {item["relation_type"] for item in response.json()["related"]} >= {"time", "category"}
+
+
 def test_bulk_download() -> None:
     client = TestClient(app)
 

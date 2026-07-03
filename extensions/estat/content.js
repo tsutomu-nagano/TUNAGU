@@ -67,10 +67,28 @@ function findStatsDataId() {
   const candidates = [
     url.searchParams.get("statsDataId"),
     url.searchParams.get("statdisp_id"),
-    document.body.innerText.match(/\b\d{10}\b/)?.[0],
+    findStatsDataIdFromDownloadLinks(),
+    document.body.innerText.match(/\b\d{10,12}\b/)?.[0],
   ];
 
   return candidates.find(Boolean) || null;
+}
+
+function findStatsDataIdFromDownloadLinks() {
+  const links = Array.from(document.querySelectorAll('a[href*="file-download"]'));
+  for (const link of links) {
+    try {
+      const href = new URL(link.getAttribute("href"), window.location.href);
+      const statInfId = href.searchParams.get("statInfId") || href.searchParams.get("statinfid");
+      if (statInfId) {
+        return statInfId;
+      }
+    } catch (_error) {
+      continue;
+    }
+  }
+
+  return null;
 }
 
 function createButton(statsDataId) {
@@ -93,7 +111,7 @@ function ensureButton(statsDataId) {
 
 async function openDrawer(statsDataId) {
   const drawer = ensureDrawer();
-  drawer.classList.add("is-open");
+  setDrawerOpen(drawer, true);
   drawer.querySelector(".tunagu-drawer-body").innerHTML = '<p class="tunagu-muted">関連データを取得しています。</p>';
 
   try {
@@ -110,9 +128,15 @@ async function openDrawer(statsDataId) {
   }
 }
 
+function setDrawerOpen(drawer, isOpen) {
+  drawer.classList.toggle("is-open", isOpen);
+  document.querySelector(".tunagu-page-overlay")?.classList.toggle("is-open", isOpen);
+}
+
 function ensureDrawer() {
   let drawer = document.querySelector(".tunagu-drawer");
   if (drawer) {
+    ensurePageOverlay(drawer);
     return drawer;
   }
 
@@ -129,10 +153,26 @@ function ensureDrawer() {
     <div class="tunagu-drawer-body"></div>
   `;
   drawer.querySelector(".tunagu-close-button").addEventListener("click", () => {
-    drawer.classList.remove("is-open");
+    setDrawerOpen(drawer, false);
   });
   document.body.appendChild(drawer);
+  ensurePageOverlay(drawer);
   return drawer;
+}
+
+function ensurePageOverlay(drawer) {
+  let overlay = document.querySelector(".tunagu-page-overlay");
+  if (overlay) {
+    return overlay;
+  }
+
+  overlay = document.createElement("div");
+  overlay.className = "tunagu-page-overlay";
+  overlay.addEventListener("click", () => {
+    setDrawerOpen(drawer, false);
+  });
+  document.body.appendChild(overlay);
+  return overlay;
 }
 
 function renderRelations(drawer, payload) {

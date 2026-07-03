@@ -56,6 +56,26 @@ INSERT INTO relations (
     ARRAY['EXCEL', 'CSV', 'DB'],
     '2026-07-01',
     30
+  ),
+  (
+    '000040325905',
+    '000040325906',
+    '学校基本調査 関連統計データ サンプル1',
+    'time',
+    '指定された e-Stat ページの statInfId から取得できる確認用データです。',
+    ARRAY['EXCEL'],
+    '2026-07-01',
+    10
+  ),
+  (
+    '000040325905',
+    '000040325907',
+    '学校基本調査 関連統計データ サンプル2',
+    'category',
+    '同じ統計ページで分類軸が近い関連データの確認用サンプルです。',
+    ARRAY['CSV'],
+    '2026-07-01',
+    20
   )
 ON CONFLICT (source_stats_data_id, stats_data_id, relation_type) DO UPDATE SET
   title = EXCLUDED.title,
