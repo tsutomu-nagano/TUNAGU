@@ -53,7 +53,7 @@ try {
                 font-size: 22px;
               }
               main {
-                max-width: 960px;
+                max-width: 1120px;
                 margin: 32px auto;
                 background: #fff;
                 border: 1px solid #d8e0ea;
@@ -79,18 +79,66 @@ try {
                 color: #4b5563;
                 font-weight: 700;
               }
+              table {
+                border-collapse: collapse;
+                margin-top: 24px;
+                width: 100%;
+              }
+              th,
+              td {
+                border: 1px solid #d8e0ea;
+                padding: 12px;
+                text-align: left;
+                vertical-align: middle;
+              }
+              th {
+                background: #edf3fb;
+                color: #24364b;
+              }
+              td:last-child,
+              th:last-child {
+                text-align: center;
+                white-space: nowrap;
+              }
+              a {
+                color: #005bac;
+                font-weight: 700;
+              }
             </style>
           </head>
           <body>
             <header><strong>e-Stat</strong></header>
             <main>
-              <h1>人口推計 2021年</h1>
-              <p>統計データ ID: 0003448231</p>
+              <h1>人口推計 統計データ一覧</h1>
               <section class="meta">
                 <div><span class="label">統計名</span><span>人口推計</span></div>
                 <div><span class="label">提供分類</span><span>全国・年次</span></div>
                 <div><span class="label">公開日</span><span>2026-07-01</span></div>
               </section>
+              <table>
+                <thead>
+                  <tr>
+                    <th>統計データID</th>
+                    <th>表題</th>
+                    <th>時間軸</th>
+                    <th>表示・ダウンロード</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>0003448231</td>
+                    <td>人口推計 2021年</td>
+                    <td>2021年</td>
+                    <td><a href="/stat-search/file-download?statInfId=0003448231&fileKind=0">DB</a></td>
+                  </tr>
+                  <tr>
+                    <td>0003448221</td>
+                    <td>人口推計 2020年</td>
+                    <td>2020年</td>
+                    <td><a href="/stat-search/file-download?statInfId=0003448221&fileKind=0">DB</a></td>
+                  </tr>
+                </tbody>
+              </table>
             </main>
           </body>
         </html>`,

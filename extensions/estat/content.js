@@ -77,18 +77,22 @@ function findStatsDataId() {
 function findStatsDataIdFromDownloadLinks() {
   const links = Array.from(document.querySelectorAll('a[href*="file-download"]'));
   for (const link of links) {
-    try {
-      const href = new URL(link.getAttribute("href"), window.location.href);
-      const statInfId = href.searchParams.get("statInfId") || href.searchParams.get("statinfid");
-      if (statInfId) {
-        return statInfId;
-      }
-    } catch (_error) {
-      continue;
+    const statsDataId = findStatsDataIdFromLink(link);
+    if (statsDataId) {
+      return statsDataId;
     }
   }
 
   return null;
+}
+
+function findStatsDataIdFromLink(link) {
+  try {
+    const href = new URL(link.getAttribute("href"), window.location.href);
+    return href.searchParams.get("statInfId") || href.searchParams.get("statinfid");
+  } catch (_error) {
+    return null;
+  }
 }
 
 function createButton(statsDataId) {
@@ -101,12 +105,119 @@ function createButton(statsDataId) {
 }
 
 function ensureButton(statsDataId) {
+  if (ensureResultTableButtons()) {
+    return;
+  }
+
   if (document.querySelector(".tunagu-related-button")) {
     return;
   }
 
   const heading = document.querySelector("h1, h2, .stat-title, main") || document.body;
   heading.insertAdjacentElement("afterend", createButton(statsDataId));
+}
+
+function ensureResultTableButtons() {
+  let inserted = false;
+  const tables = Array.from(document.querySelectorAll("table"));
+
+  for (const table of tables) {
+    const displayColumnIndex = findDisplayDownloadColumnIndex(table);
+    if (displayColumnIndex === -1) {
+      continue;
+    }
+
+    ensureResultTableHeader(table, displayColumnIndex);
+
+    const rows = Array.from(table.querySelectorAll("tbody tr"));
+    for (const row of rows) {
+      if (row.querySelector(".tunagu-related-cell")) {
+        inserted = true;
+        continue;
+      }
+
+      const cells = Array.from(row.children).filter((cell) => cell.matches("td, th"));
+      const displayCell = cells[displayColumnIndex];
+      if (!displayCell) {
+        continue;
+      }
+
+      const statsDataId = findStatsDataIdInRow(row);
+      if (!statsDataId) {
+        continue;
+      }
+
+      const relatedCell = document.createElement("td");
+      relatedCell.className = "tunagu-related-cell";
+      relatedCell.append(createButton(statsDataId));
+      displayCell.insertAdjacentElement("afterend", relatedCell);
+      inserted = true;
+    }
+  }
+
+  return inserted;
+}
+
+function findDisplayDownloadColumnIndex(table) {
+  const headerRows = Array.from(table.querySelectorAll("thead tr, tr")).filter((row) =>
+    Array.from(row.children).some((cell) => cell.matches("th"))
+  );
+
+  for (const row of headerRows) {
+    const cells = Array.from(row.children).filter((cell) => cell.matches("th, td"));
+    const index = cells.findIndex((cell) => {
+      const text = normalizeText(cell.textContent);
+      return text.includes("表示") && text.includes("ダウンロード");
+    });
+
+    if (index !== -1) {
+      return index;
+    }
+  }
+
+  return -1;
+}
+
+function ensureResultTableHeader(table, displayColumnIndex) {
+  const headerRows = Array.from(table.querySelectorAll("thead tr, tr")).filter((row) =>
+    Array.from(row.children).some((cell) => cell.matches("th"))
+  );
+  const headerRow = headerRows.find((row) => {
+    const cells = Array.from(row.children).filter((cell) => cell.matches("th, td"));
+    return cells[displayColumnIndex] && normalizeText(cells[displayColumnIndex].textContent).includes("ダウンロード");
+  });
+
+  if (!headerRow || headerRow.querySelector(".tunagu-related-header")) {
+    return;
+  }
+
+  const cells = Array.from(headerRow.children).filter((cell) => cell.matches("th, td"));
+  const displayHeader = cells[displayColumnIndex];
+  if (!displayHeader) {
+    return;
+  }
+
+  const relatedHeader = document.createElement("th");
+  relatedHeader.className = "tunagu-related-header";
+  relatedHeader.scope = "col";
+  relatedHeader.textContent = "関連データ";
+  displayHeader.insertAdjacentElement("afterend", relatedHeader);
+}
+
+function findStatsDataIdInRow(row) {
+  const downloadLinks = Array.from(row.querySelectorAll('a[href*="file-download"]'));
+  for (const link of downloadLinks) {
+    const statsDataId = findStatsDataIdFromLink(link);
+    if (statsDataId) {
+      return statsDataId;
+    }
+  }
+
+  return row.textContent.match(/\b\d{10,12}\b/)?.[0] || null;
+}
+
+function normalizeText(value) {
+  return String(value || "").replace(/\s+/g, "");
 }
 
 async function openDrawer(statsDataId) {

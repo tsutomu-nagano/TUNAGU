@@ -39,6 +39,17 @@
   background: #0756a3;
 }
 
+.tunagu-related-header,
+.tunagu-related-cell {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.tunagu-related-cell .tunagu-related-button {
+  margin: 0;
+  padding: 8px 10px;
+}
+
 .tunagu-page-overlay {
   background: rgba(15, 23, 42, 0.34);
   inset: 0;
