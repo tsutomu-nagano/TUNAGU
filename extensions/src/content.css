@@ -76,11 +76,31 @@
   color: #1f2937;
   display: flex;
   flex-direction: column;
-  transform: translateX(105%);
+  transform: translateX(calc(100% + min(760px, 94vw)));
   transition: transform 180ms ease;
 }
 
 .tunagu-drawer.is-open {
+  transform: translateX(0);
+}
+
+.tunagu-detail-drawer {
+  background: #fff;
+  box-shadow: -8px 0 24px rgba(15, 23, 42, 0.16);
+  color: #1f2937;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: fixed;
+  right: min(760px, 94vw);
+  top: 0;
+  transform: translateX(105%);
+  transition: transform 180ms ease;
+  width: min(720px, calc(100vw - min(760px, 94vw)));
+  z-index: 2147483646;
+}
+
+.tunagu-detail-drawer.is-open {
   transform: translateX(0);
 }
 
@@ -91,6 +111,58 @@
   display: flex;
   justify-content: space-between;
   padding: 18px 20px;
+}
+
+.tunagu-detail-drawer-header {
+  align-items: center;
+  background: #fff;
+  border-bottom: 1px solid #dfe7f0;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 14px 16px;
+}
+
+.tunagu-detail-drawer-header p {
+  color: #58708a;
+  font-size: 12px;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+
+.tunagu-detail-drawer-header h2 {
+  color: #172033;
+  font-size: 17px;
+  margin: 0;
+}
+
+.tunagu-detail-drawer-actions {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.tunagu-detail-open-link {
+  border: 1px solid #cbd8e6;
+  border-radius: 6px;
+  color: #0756a3 !important;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 8px 9px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.tunagu-detail-open-link:hover {
+  background: #e8f2ff;
+}
+
+.tunagu-detail-frame {
+  border: 0;
+  flex: 1;
+  width: 100%;
 }
 
 .tunagu-drawer-header p {
@@ -389,9 +461,11 @@
 
 .tunagu-group-download {
   align-items: center;
+  background: #fff;
   border: 1px solid #cbd8e6;
   border-radius: 6px;
   color: #0756a3 !important;
+  cursor: pointer;
   display: inline-flex;
   gap: 5px;
   font-size: 12px;
@@ -486,6 +560,10 @@
   width: 56px;
 }
 
+.tunagu-detail-column {
+  width: 1%;
+}
+
 .tunagu-title-cell {
   color: #111827;
   font-size: 13px;
@@ -523,6 +601,23 @@
 .tunagu-survey-date-cell {
   white-space: nowrap;
   width: 19ch;
+}
+
+.tunagu-detail-link {
+  border: 1px solid #cbd8e6;
+  border-radius: 6px;
+  color: #0756a3 !important;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 7px 8px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.tunagu-detail-link:hover {
+  background: #e8f2ff;
 }
 
 .tunagu-select-control {
@@ -601,6 +696,17 @@
 }
 
 @media (max-width: 520px) {
+  .tunagu-detail-drawer {
+    right: 0;
+    transform: translateX(105%);
+    width: 94vw;
+    z-index: 2147483647;
+  }
+
+  .tunagu-detail-drawer.is-open {
+    transform: translateX(0);
+  }
+
   .tunagu-contact {
     align-items: stretch;
     grid-template-columns: 1fr;

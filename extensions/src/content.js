@@ -531,6 +531,29 @@ function setDrawerOpen(
       "is-open",
       isOpen
     );
+
+  if (!isOpen) {
+    setDetailDrawerOpen(false);
+  }
+}
+
+function closeDrawers() {
+  const drawer =
+    document.querySelector(
+      ".tunagu-drawer"
+    );
+
+  if (drawer) {
+    setDrawerOpen(drawer, false);
+  }
+
+  setDetailDrawerOpen(false);
+
+  document
+    .querySelector(
+      ".tunagu-page-overlay"
+    )
+    ?.classList.remove("is-open");
 }
 
 function ensureDrawer() {
@@ -616,10 +639,7 @@ function ensurePageOverlay(drawer) {
   overlay.addEventListener(
     "click",
     () => {
-      setDrawerOpen(
-        drawer,
-        false
-      );
+      closeDrawers();
     }
   );
 
@@ -628,6 +648,116 @@ function ensurePageOverlay(drawer) {
   );
 
   return overlay;
+}
+
+function ensureDetailDrawer() {
+  let drawer =
+    document.querySelector(
+      ".tunagu-detail-drawer"
+    );
+
+  if (drawer) {
+    return drawer;
+  }
+
+  drawer =
+    document.createElement(
+      "aside"
+    );
+
+  drawer.className =
+    "tunagu-detail-drawer";
+
+  drawer.innerHTML = `
+    <header class="tunagu-detail-drawer-header">
+      <div>
+        <p>e-Stat 詳細</p>
+        <h2>統計データ詳細</h2>
+      </div>
+
+      <div class="tunagu-detail-drawer-actions">
+        <a
+          class="tunagu-detail-open-link"
+          href="#"
+          target="_blank"
+          rel="noreferrer"
+        >
+          別タブで開く
+        </a>
+
+        <button
+          type="button"
+          class="tunagu-close-button"
+          aria-label="詳細を閉じる"
+        >
+          ${icons.close}
+        </button>
+      </div>
+    </header>
+
+    <iframe
+      class="tunagu-detail-frame"
+      title="統計データ詳細"
+    ></iframe>
+  `;
+
+  drawer
+    .querySelector(
+      ".tunagu-close-button"
+    )
+    .addEventListener(
+      "click",
+      () => {
+        setDetailDrawerOpen(false);
+      }
+    );
+
+  document.body.appendChild(
+    drawer
+  );
+
+  return drawer;
+}
+
+function openDetailDrawer(url) {
+  const drawer =
+    ensureDetailDrawer();
+
+  const frame =
+    drawer.querySelector(
+      ".tunagu-detail-frame"
+    );
+
+  const openLink =
+    drawer.querySelector(
+      ".tunagu-detail-open-link"
+    );
+
+  frame.src = url;
+  openLink.href = url;
+
+  setDetailDrawerOpen(true);
+}
+
+function setDetailDrawerOpen(isOpen) {
+  const drawer =
+    document.querySelector(
+      ".tunagu-detail-drawer"
+    );
+
+  if (!drawer) {
+    return;
+  }
+
+  if (!isOpen) {
+    drawer.remove();
+    return;
+  }
+
+  drawer.classList.toggle(
+    "is-open",
+    isOpen
+  );
 }
 
 function renderRelations(
@@ -696,11 +826,7 @@ function renderRelations(
 
       <a
         class="tunagu-download-button is-disabled"
-        href="${buildBulkDownloadUrl(
-          []
-        )}"
-        target="_blank"
-        rel="noreferrer"
+        href="#"
         aria-disabled="true"
       >
         ${icons.download}
@@ -750,6 +876,10 @@ function renderRelations(
 
   wireTabControls(body);
 
+  wireGroupDownloadControls(body);
+
+  wireDetailLinks(body);
+
   wireSelectionControls(body);
 }
 
@@ -766,7 +896,7 @@ function renderContactAction(
           aria-label="問い合わせ種別"
         >
           <option value="location">
-            データの所在に関する問い合わせ
+            統計情報の所在に関する問い合わせ
           </option>
 
           <option value="content">
@@ -782,8 +912,12 @@ function renderContactAction(
       <a
         class="tunagu-contact-button"
         href="${buildContactHref(
-          statsDataId,
-          "location"
+          {
+            statsDataId,
+            inquiryType:
+              "location",
+            selectedIds: [],
+          }
         )}"
         target="_blank"
         rel="noreferrer"
@@ -920,22 +1054,15 @@ function renderRelationPanel(
           </p>
         </div>
 
-        <a
+        <button
+          type="button"
           class="tunagu-group-download"
-          href="${buildBulkDownloadUrl(
-            group.items.map(
-              (item) =>
-                item.statinfid
-            )
-          )}"
-          target="_blank"
-          rel="noreferrer"
         >
           ${icons.download}
           <span>
             このまとまり
           </span>
-        </a>
+        </button>
       </div>
 
       <div class="tunagu-table-wrap">
@@ -965,6 +1092,13 @@ function renderRelationPanel(
 
               <th scope="col">
                 形式
+              </th>
+
+              <th
+                scope="col"
+                class="tunagu-detail-column"
+              >
+                詳細
               </th>
 
             </tr>
@@ -1039,14 +1173,37 @@ function renderRelationRow(
       <td>
         ${renderFormatBadges(
           item.formats,
-          statinfid
+          statinfid,
+          getSurveyDateLabel(item)
         )}
+      </td>
+
+      <td>
+        <a
+          class="tunagu-detail-link"
+          href="${buildStatsDataDetailUrl(
+            statinfid
+          )}"
+          target="_blank"
+          rel="noreferrer"
+          aria-label="統計データ ID ${escapeHtml(
+            statinfid
+          )} の詳細を開く"
+        >
+          詳細
+        </a>
       </td>
     </tr>
   `;
 }
 
 function renderSurveyYear(item) {
+  return escapeHtml(
+    getSurveyDateLabel(item)
+  );
+}
+
+function getSurveyDateLabel(item) {
   const dateFrom =
     item.survey_date_from ||
     item.survey_year_from;
@@ -1059,28 +1216,24 @@ function renderSurveyYear(item) {
     !dateFrom &&
     !dateTo
   ) {
-    return "-";
+    return "調査年不明";
   }
 
   if (
     dateFrom === dateTo ||
     !dateTo
   ) {
-    return escapeHtml(
-      formatSurveyDate(dateFrom)
-    );
+    return formatSurveyDate(dateFrom);
   }
 
   if (!dateFrom) {
-    return escapeHtml(
-      formatSurveyDate(dateTo)
-    );
+    return formatSurveyDate(dateTo);
   }
 
-  return `${escapeHtml(
-    formatSurveyDate(dateFrom)
-  )}–${escapeHtml(
-    formatSurveyDate(dateTo)
+  return `${formatSurveyDate(
+    dateFrom
+  )}–${formatSurveyDate(
+    dateTo
   )}`;
 }
 
@@ -1102,7 +1255,8 @@ function formatSurveyDate(value) {
 
 function renderFormatBadges(
   formats,
-  statinfid
+  statinfid,
+  surveyDateLabel
 ) {
   const normalizedFormats =
     Array.isArray(formats) &&
@@ -1140,6 +1294,16 @@ function renderFormatBadges(
                   normalizeFormatLabel(
                     format
                   )
+                )}"
+                data-filename="${escapeHtml(
+                  buildDownloadFilename(
+                    statinfid,
+                    surveyDateLabel,
+                    format
+                  )
+                )}"
+                data-filename-suffix="${escapeHtml(
+                  surveyDateLabel
                 )}"
                 aria-label="${escapeHtml(
                   normalizeFormatLabel(
@@ -1181,36 +1345,32 @@ function wireSelectionControls(
     );
 
   const update = () => {
-    const selectedIds =
+    const selectedCheckboxes =
       checkboxes
         .filter(
           (checkbox) =>
             checkbox.checked
-        )
-        .map(
-          (checkbox) =>
-            checkbox.value
         );
 
-    download.href =
-      buildBulkDownloadUrl(
-        selectedIds
+    const downloadLinks =
+      getSelectedFormatDownloadLinks(
+        selectedCheckboxes
       );
 
     download.querySelector(
       "strong"
     ).textContent = String(
-      selectedIds.length
+      selectedCheckboxes.length
     );
 
     download.classList.toggle(
       "is-disabled",
-      selectedIds.length === 0
+      downloadLinks.length === 0
     );
 
     download.setAttribute(
       "aria-disabled",
-      selectedIds.length === 0
+      downloadLinks.length === 0
         ? "true"
         : "false"
     );
@@ -1218,10 +1378,12 @@ function wireSelectionControls(
     selectAll.querySelector(
       "span"
     ).textContent =
-      selectedIds.length ===
+      selectedCheckboxes.length ===
       checkboxes.length
         ? "すべて解除"
         : "すべて選択";
+
+    updateContactHref(root);
   };
 
   for (const checkbox of checkboxes) {
@@ -1254,17 +1416,167 @@ function wireSelectionControls(
   download.addEventListener(
     "click",
     (event) => {
+      event.preventDefault();
+
       if (
         download.getAttribute(
           "aria-disabled"
         ) === "true"
       ) {
-        event.preventDefault();
+        return;
       }
+
+      runSelectedFormatDownloads(
+        checkboxes
+      );
     }
   );
 
   update();
+}
+
+function wireGroupDownloadControls(root) {
+  const buttons = Array.from(
+    root.querySelectorAll(
+      ".tunagu-group-download"
+    )
+  );
+
+  for (const button of buttons) {
+    button.addEventListener(
+      "click",
+      () => {
+        const panel =
+          button.closest(
+            ".tunagu-tab-panel"
+          );
+
+        runFormatDownloadsInRoot(
+          panel
+        );
+      }
+    );
+  }
+}
+
+function wireDetailLinks(root) {
+  const links = Array.from(
+    root.querySelectorAll(
+      ".tunagu-detail-link"
+    )
+  );
+
+  for (const link of links) {
+    link.addEventListener(
+      "click",
+      (event) => {
+        event.preventDefault();
+        openDetailDrawer(link.href);
+      }
+    );
+  }
+}
+
+function getSelectedFormatDownloadLinks(
+  selectedCheckboxes
+) {
+  return selectedCheckboxes.flatMap(
+    (checkbox) => {
+      const row =
+        checkbox.closest(
+          ".tunagu-relation-row"
+        );
+
+      return Array.from(
+        row?.querySelectorAll(
+          ".tunagu-format-badge[href]"
+        ) || []
+      );
+    }
+  );
+}
+
+function runSelectedFormatDownloads(
+  checkboxes
+) {
+  const selectedCheckboxes =
+    checkboxes.filter(
+      (checkbox) =>
+        checkbox.checked
+    );
+
+  const links =
+    getSelectedFormatDownloadLinks(
+      selectedCheckboxes
+    );
+
+  runFormatDownloads(links);
+}
+
+function runFormatDownloadsInRoot(root) {
+  const links = Array.from(
+    root?.querySelectorAll(
+      ".tunagu-format-badge[href]"
+    ) || []
+  );
+
+  runFormatDownloads(links);
+}
+
+function runFormatDownloads(links) {
+  const items = links
+    .map((link) =>
+      ({
+        url: link.href,
+        filename:
+          link.dataset.filename || "",
+        filenameSuffix:
+          link.dataset.filenameSuffix ||
+          "",
+      })
+    )
+    .filter((item) => item.url);
+
+  if (!items.length) {
+    return;
+  }
+
+  if (
+    typeof chrome !== "undefined" &&
+    chrome.runtime?.sendMessage
+  ) {
+    chrome.runtime.sendMessage(
+      {
+        type: "TUNAGU_DOWNLOAD_URLS",
+        items,
+      },
+      (response) => {
+        if (
+          chrome.runtime.lastError ||
+          response?.ok === false
+        ) {
+          console.error(
+            "TUNAGU download request failed:",
+            chrome.runtime.lastError ||
+              response
+          );
+          fallbackOpenDownloadUrls(
+            items
+          );
+        }
+      }
+    );
+
+    return;
+  }
+
+  fallbackOpenDownloadUrls(items);
+}
+
+function fallbackOpenDownloadUrls(items) {
+  for (const item of items) {
+    window.open(item.url, "_blank");
+  }
 }
 
 function wireTabControls(root) {
@@ -1330,21 +1642,64 @@ function wireContactAction(
     return;
   }
 
+  button.dataset.statsDataId =
+    statsDataId;
+
   select.addEventListener(
     "change",
     () => {
-      button.href =
-        buildContactHref(
-          statsDataId,
-          select.value
-        );
+      updateContactHref(root);
     }
   );
+
+  button.addEventListener(
+    "click",
+    () => {
+      updateContactHref(root);
+    }
+  );
+
+  updateContactHref(root);
 }
 
-function buildContactHref(
+function updateContactHref(root) {
+  const select =
+    root.querySelector(
+      ".tunagu-contact-select"
+    );
+
+  const button =
+    root.querySelector(
+      ".tunagu-contact-button"
+    );
+
+  if (!select || !button) {
+    return;
+  }
+
+  const selectedIds = Array.from(
+    root.querySelectorAll(
+      ".tunagu-relation-checkbox:checked"
+    )
+  ).map(
+    (checkbox) =>
+      checkbox.value
+  );
+
+  button.href = buildContactHref({
+    statsDataId:
+      button.dataset.statsDataId ||
+      "",
+    inquiryType: select.value,
+    selectedIds,
+  });
+}
+
+function buildContactHref({
   statsDataId,
-  inquiryType
+  inquiryType,
+  selectedIds,
+}
 ) {
   const labels = {
     location:
@@ -1361,23 +1716,50 @@ function buildContactHref(
     labels[inquiryType] ||
     labels.other;
 
-  const subject =
-    `【TUNAGU】${inquiryLabel}`;
+  const subjectLabels = {
+    location:
+      "統計情報の所在に関する問い合わせ",
 
-  const body = [
-    inquiryLabel,
-    "",
-    `統計データ ID: ${statsDataId}`,
-    `参照ページ: ${window.location.href}`,
+    content:
+      "データの内容に関する問い合わせ",
+
+    other:
+      "その他の問い合わせ",
+  };
+
+  const subjectLabel =
+    subjectLabels[inquiryType] ||
+    subjectLabels.other;
+
+  const message = [
+    `参照ページ: ${buildStatsDataPageUrl(
+      statsDataId
+    )}`,
     "",
     "問い合わせ内容:",
-  ].join("\n");
+  ]
+    .filter((line) => line !== "")
+    .join("\n");
 
-  return `mailto:?subject=${encodeURIComponent(
-    subject
-  )}&body=${encodeURIComponent(
-    body
-  )}`;
+  const params =
+    new URLSearchParams();
+
+  params.set(
+    "tunagu_inquiry",
+    inquiryType
+  );
+
+  params.set(
+    "tunagu_subject",
+    subjectLabel
+  );
+
+  params.set(
+    "tunagu_message",
+    message
+  );
+
+  return `https://www.e-stat.go.jp/contact?${params.toString()}`;
 }
 
 function buildBulkDownloadUrl(ids) {
@@ -1390,6 +1772,31 @@ function buildBulkDownloadUrl(ids) {
   );
 
   return `${API_BASE_URL}/v1/downloads/bulk?${params.toString()}`;
+}
+
+function buildStatsDataPageUrl(statsDataId) {
+  const params =
+    new URLSearchParams();
+
+  params.set("page", "1");
+  params.set(
+    "stat_infid",
+    statsDataId
+  );
+
+  return `https://www.e-stat.go.jp/stat-search/files?${params.toString()}`;
+}
+
+function buildStatsDataDetailUrl(statsDataId) {
+  const params =
+    new URLSearchParams();
+
+  params.set(
+    "stat_infid",
+    statsDataId
+  );
+
+  return `https://www.e-stat.go.jp/stat-search/files?${params.toString()}`;
 }
 
 function buildFileDownloadUrl(
@@ -1458,6 +1865,62 @@ function normalizeFormatLabel(format) {
   return normalized;
 }
 
+function buildDownloadFilename(
+  statinfid,
+  surveyDateLabel,
+  format
+) {
+  const label =
+    normalizeFormatLabel(format);
+
+  const extension =
+    getFileExtension(label);
+
+  const baseName = [
+    statinfid,
+    surveyDateLabel,
+    label,
+  ]
+    .filter(Boolean)
+    .join("_");
+
+  return `${sanitizeFilename(
+    baseName
+  )}.${extension}`;
+}
+
+function getFileExtension(formatLabel) {
+  const normalized = String(
+    formatLabel || ""
+  ).toUpperCase();
+
+  if (normalized === "EXCEL") {
+    return "xls";
+  }
+
+  if (normalized === "CSV") {
+    return "csv";
+  }
+
+  if (normalized === "PDF") {
+    return "pdf";
+  }
+
+  if (normalized === "XML") {
+    return "xml";
+  }
+
+  return "dat";
+}
+
+function sanitizeFilename(value) {
+  return String(value || "")
+    .replace(/[\\/:*?"<>|]/g, "_")
+    .replace(/\s+/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
 function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -1470,7 +1933,194 @@ function escapeHtml(value) {
     );
 }
 
+function prefillContactMessage() {
+  if (
+    window.location.pathname !==
+    "/contact"
+  ) {
+    return false;
+  }
+
+  const params =
+    new URLSearchParams(
+      window.location.search
+    );
+
+  const message =
+    params.get("tunagu_message");
+
+  const subject =
+    params.get("tunagu_subject") ||
+    getContactSubjectLabel(
+      params.get("tunagu_inquiry")
+    );
+
+  if (!message) {
+    return false;
+  }
+
+  selectContactSubject(subject);
+
+  const field =
+    findContactMessageField();
+
+  if (!field) {
+    return false;
+  }
+
+  if (!field.value) {
+    field.value = message;
+    field.dispatchEvent(
+      new Event("input", {
+        bubbles: true,
+      })
+    );
+    field.dispatchEvent(
+      new Event("change", {
+        bubbles: true,
+      })
+    );
+  }
+
+  return true;
+}
+
+function getContactSubjectLabel(inquiryType) {
+  const labels = {
+    location:
+      "統計情報の所在に関する問い合わせ",
+
+    content:
+      "データの内容に関する問い合わせ",
+
+    other:
+      "その他の問い合わせ",
+  };
+
+  return labels[inquiryType] || "";
+}
+
+function selectContactSubject(subject) {
+  if (!subject) {
+    return false;
+  }
+
+  if (selectOptionByText(subject)) {
+    return true;
+  }
+
+  return checkInputByLabelText(subject);
+}
+
+function selectOptionByText(optionText) {
+  const selects = Array.from(
+    document.querySelectorAll("select")
+  );
+
+  for (const select of selects) {
+    const options = Array.from(
+      select.options || []
+    );
+
+    const option = options.find(
+      (item) =>
+        normalizeText(item.textContent) ===
+        normalizeText(optionText)
+    );
+
+    if (!option) {
+      continue;
+    }
+
+    select.value = option.value;
+    select.dispatchEvent(
+      new Event("input", {
+        bubbles: true,
+      })
+    );
+    select.dispatchEvent(
+      new Event("change", {
+        bubbles: true,
+      })
+    );
+
+    return true;
+  }
+
+  return false;
+}
+
+function checkInputByLabelText(labelText) {
+  const labels = Array.from(
+    document.querySelectorAll("label")
+  );
+
+  const label = labels.find(
+    (item) =>
+      normalizeText(item.textContent) ===
+      normalizeText(labelText)
+  );
+
+  const input =
+    label?.control ||
+    label?.querySelector(
+      'input[type="radio"], input[type="checkbox"]'
+    );
+
+  if (!input) {
+    return false;
+  }
+
+  input.checked = true;
+  input.dispatchEvent(
+    new Event("input", {
+      bubbles: true,
+    })
+  );
+  input.dispatchEvent(
+    new Event("change", {
+      bubbles: true,
+    })
+  );
+
+  return true;
+}
+
+function findContactMessageField() {
+  const selectors = [
+    "textarea",
+    '[name*="message" i]',
+    '[id*="message" i]',
+    '[name*="content" i]',
+    '[id*="content" i]',
+    '[name*="body" i]',
+    '[id*="body" i]',
+    '[name*="naiyo" i]',
+    '[id*="naiyo" i]',
+    '[name*="comment" i]',
+    '[id*="comment" i]',
+  ];
+
+  for (const selector of selectors) {
+    const field =
+      document.querySelector(
+        selector
+      );
+
+    if (
+      field &&
+      "value" in field
+    ) {
+      return field;
+    }
+  }
+
+  return null;
+}
+
 function initializeTunagu() {
+  prefillContactMessage();
+
   const statsDataId =
     findStatsDataId();
 
@@ -1487,6 +2137,7 @@ initializeTunagu();
 
 const observer =
   new MutationObserver(() => {
+    prefillContactMessage();
     ensureResultTableButtons();
     ensureDatasetListButtons();
   });

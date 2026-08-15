@@ -8,8 +8,11 @@
     "48": "src/resources/icon48.png",
     "128": "src/resources/icon128.png"
   },
-  "permissions": ["storage"],
+  "permissions": ["storage", "downloads"],
   "host_permissions": ["https://www.e-stat.go.jp/*", "http://localhost:8000/*"],
+  "background": {
+    "service_worker": "src/background.js"
+  },
   "content_scripts": [
     {
       "matches": ["https://www.e-stat.go.jp/*"],
@@ -19,4 +22,3 @@
     }
   ]
 }
-
