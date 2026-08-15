@@ -1,4 +1,5 @@
 import os
+from enum import Enum
 from io import StringIO
 from functools import lru_cache
 import csv
@@ -8,8 +9,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 
 from .models import RelationResponse
-from .repository import RelationRepository, get_database_url
+from .repository import RelationRepository
 
+
+class RelationType(str, Enum):
+    time = "time"
+    region = "region"
 
 def create_app() -> FastAPI:
     app = FastAPI(
@@ -31,25 +36,21 @@ def create_app() -> FastAPI:
     def health() -> dict[str, str]:
         return {"status": "ok"}
 
-    @app.get("/v1/stats/{stats_data_id}/relations", response_model=RelationResponse)
-    def get_relations(stats_data_id: str) -> RelationResponse:
+    @app.get("/v1/stats/{statinfid}/relations", response_model=RelationResponse)
+    def get_all_relations(statinfid: str) -> RelationResponse:
         return RelationResponse(
-            stats_data_id=stats_data_id,
-            related=get_repository().find_related(stats_data_id),
+            statinfid=statinfid,
+            relations=get_repository().find_related(statinfid),
         )
 
-    @app.get("/v1/downloads/bulk")
-    def bulk_download(statsDataIds: str) -> Response:
-        output = StringIO()
-        writer = csv.writer(output)
-        writer.writerow(["stats_data_id"])
-        for stats_data_id in [item.strip() for item in statsDataIds.split(",") if item.strip()]:
-            writer.writerow([stats_data_id])
-
-        return Response(
-            content=output.getvalue(),
-            media_type="text/csv; charset=utf-8",
-            headers={"Content-Disposition": 'attachment; filename="tunagu-stats-data-ids.csv"'},
+    @app.get("/v1/stats/{statinfid}/relations/{relation_type}", response_model=RelationResponse)
+    def get_relations(
+        statinfid: str,
+        relation_type: RelationType,
+    ):
+        return RelationResponse(
+            statinfid=statinfid,
+            relations=get_repository().find_related(statinfid, relation_type.value),
         )
 
     return app
@@ -57,7 +58,7 @@ def create_app() -> FastAPI:
 
 @lru_cache
 def get_repository() -> RelationRepository:
-    return RelationRepository(get_database_url())
+    return RelationRepository()
 
 
 app = create_app()

@@ -1,34 +1,20 @@
 services:
-  postgres:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_DB: tunagu
-      POSTGRES_USER: tunagu
-      POSTGRES_PASSWORD: tunagu
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-      - ./services/api/db/init.sql:/docker-entrypoint-initdb.d/001-init.sql:ro
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U tunagu -d tunagu"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-
   api:
     build:
-      context: ./services/api
-    depends_on:
-      postgres:
-        condition: service_healthy
+      context: ./api
     ports:
       - "8000:8000"
     volumes:
-      - ./services/api/app:/app/app:ro
+      - ./api/app:/app/app
+
+    env_file:
+      - ./.env.local
+
     environment:
-      DATABASE_URL: postgresql://tunagu:tunagu@postgres:5432/tunagu
       TUNAGU_CORS_ORIGINS: "*"
 
-volumes:
-  postgres-data:
+    command: >
+      uvicorn app.main:app
+      --host 0.0.0.0
+      --port 8000
+      --reload

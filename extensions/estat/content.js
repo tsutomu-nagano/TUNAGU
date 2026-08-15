@@ -402,8 +402,8 @@ function renderRelationPanel(group, isActive) {
               <th scope="col" class="tunagu-check-column">選択</th>
               <th scope="col">統計データ</th>
               <th scope="col">ID</th>
+              <th scope="col">調査年</th>
               <th scope="col">形式</th>
-              <th scope="col">更新</th>
               <th scope="col" class="tunagu-action-column">操作</th>
             </tr>
           </thead>
@@ -427,8 +427,8 @@ function renderRelationRow(item) {
       </td>
       <td class="tunagu-title-cell">${escapeHtml(item.title)}</td>
       <td class="tunagu-id-cell">${escapeHtml(item.stats_data_id)}</td>
+      <td>${renderSurveyYear(item)}</td>
       <td>${renderFormatBadges(item.formats)}</td>
-      <td>${item.updated_at ? escapeHtml(item.updated_at) : "-"}</td>
       <td>
         <a class="tunagu-open-link" href="https://www.e-stat.go.jp/stat-search/files?page=1&statsDataId=${encodeURIComponent(item.stats_data_id)}" target="_blank" rel="noreferrer" aria-label="${escapeHtml(item.title)}を開く">
           ${icons.external}<span>開く</span>
@@ -436,6 +436,22 @@ function renderRelationRow(item) {
       </td>
     </tr>
   `;
+}
+
+function renderSurveyYear(item) {
+  if (!item.survey_year_from && !item.survey_year_to) {
+    return "-";
+  }
+
+  if (item.survey_year_from === item.survey_year_to || !item.survey_year_to) {
+    return escapeHtml(item.survey_year_from);
+  }
+
+  if (!item.survey_year_from) {
+    return escapeHtml(item.survey_year_to);
+  }
+
+  return `${escapeHtml(item.survey_year_from)}–${escapeHtml(item.survey_year_to)}`;
 }
 
 function renderFormatBadges(formats) {

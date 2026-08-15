@@ -1,5 +1,9 @@
 AGENTS.md
 .agents/
 .codex/
-artifacts/PROJECT_STATUS.md
+artifacts/
 PROJECT_STATUS.md
+
+.env.local
+
+__pycache__
