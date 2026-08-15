@@ -22,3 +22,16 @@ class RelationGroup(BaseModel):
 class RelationResponse(BaseModel):
     statinfid: str
     relations: list[RelationGroup]
+
+
+class RelationExistsRequest(BaseModel):
+    statinfids: list[str]
+
+
+class RelationExistsItem(BaseModel):
+    statinfid: str
+    has_relations: bool
+
+
+class RelationExistsResponse(BaseModel):
+    items: list[RelationExistsItem]

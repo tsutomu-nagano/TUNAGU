@@ -42,6 +42,11 @@ const relationOrder = [
   "other",
 ];
 
+const relationAvailabilityCache = new Map();
+const pendingRelationChecks = new Set();
+const relationCheckCallbacks = new Map();
+let relationCheckTimer = null;
+
 const icons = {
   arrowRight:
     '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>',
@@ -180,7 +185,7 @@ function ensureButton(statsDataId) {
 
   if (
     document.querySelector(
-      ".tunagu-related-button"
+      ".tunagu-related-button, .tunagu-related-button-slot"
     )
   ) {
     return;
@@ -193,7 +198,50 @@ function ensureButton(statsDataId) {
 
   heading.insertAdjacentElement(
     "afterend",
-    createButton(statsDataId)
+    createDeferredButtonContainer(
+      statsDataId
+    )
+  );
+}
+
+function createDeferredButtonContainer(
+  statsDataId
+) {
+  const container =
+    document.createElement("span");
+
+  container.className =
+    "tunagu-related-button-slot";
+
+  showButtonWhenRelationsExist(
+    statsDataId,
+    container
+  );
+
+  return container;
+}
+
+function showButtonWhenRelationsExist(
+  statsDataId,
+  container
+) {
+  checkRelationsExist(
+    statsDataId,
+    (hasRelations) => {
+      if (
+        !hasRelations ||
+        !container.isConnected ||
+        container.querySelector(
+          ".tunagu-related-button"
+        )
+      ) {
+        return;
+      }
+
+      container.append(
+        createButton(statsDataId)
+      );
+    }
   );
 }
 
@@ -209,7 +257,7 @@ function ensureDatasetListButtons() {
   for (const item of items) {
     if (
       item.querySelector(
-        ".tunagu-related-button"
+        ".tunagu-related-button, .tunagu-related-button-slot"
       )
     ) {
       inserted = true;
@@ -236,12 +284,11 @@ function ensureDatasetListButtons() {
       continue;
     }
 
-    const button =
-      createButton(statsDataId);
-
     lastIcon.insertAdjacentElement(
       "afterend",
-      button
+      createDeferredButtonContainer(
+        statsDataId
+      )
     );
 
     inserted = true;
@@ -313,7 +360,9 @@ function ensureResultTableButtons() {
         "tunagu-related-cell";
 
       relatedCell.append(
-        createButton(statsDataId)
+        createDeferredButtonContainer(
+          statsDataId
+        )
       );
 
       displayCell.insertAdjacentElement(
@@ -471,6 +520,147 @@ function normalizeText(value) {
     /\s+/g,
     ""
   );
+}
+
+function checkRelationsExist(
+  statsDataId,
+  callback
+) {
+  if (!statsDataId) {
+    callback(false);
+    return;
+  }
+
+  if (
+    relationAvailabilityCache.has(
+      statsDataId
+    )
+  ) {
+    callback(
+      relationAvailabilityCache.get(
+        statsDataId
+      )
+    );
+    return;
+  }
+
+  const callbacks =
+    relationCheckCallbacks.get(
+      statsDataId
+    ) || [];
+
+  callbacks.push(callback);
+  relationCheckCallbacks.set(
+    statsDataId,
+    callbacks
+  );
+
+  pendingRelationChecks.add(
+    statsDataId
+  );
+
+  scheduleRelationCheckFlush();
+}
+
+function scheduleRelationCheckFlush() {
+  if (relationCheckTimer) {
+    return;
+  }
+
+  relationCheckTimer =
+    window.setTimeout(() => {
+      relationCheckTimer = null;
+      flushRelationChecks();
+    }, 80);
+}
+
+async function flushRelationChecks() {
+  const ids = Array.from(
+    pendingRelationChecks
+  );
+
+  pendingRelationChecks.clear();
+
+  if (!ids.length) {
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/v1/stats/relations/exists`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+        body: JSON.stringify({
+          statinfids: ids,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `API request failed: ${response.status}`
+      );
+    }
+
+    const payload =
+      await response.json();
+
+    const items = Array.isArray(
+      payload.items
+    )
+      ? payload.items
+      : [];
+
+    const results = new Map(
+      items.map((item) => [
+        item.statinfid,
+        Boolean(item.has_relations),
+      ])
+    );
+
+    for (const id of ids) {
+      resolveRelationCheck(
+        id,
+        results.get(id) || false
+      );
+    }
+  } catch (error) {
+    console.error(
+      "TUNAGU relation exists API error:",
+      error
+    );
+
+    for (const id of ids) {
+      resolveRelationCheck(id, false);
+    }
+  }
+}
+
+function resolveRelationCheck(
+  statsDataId,
+  hasRelations
+) {
+  relationAvailabilityCache.set(
+    statsDataId,
+    hasRelations
+  );
+
+  const callbacks =
+    relationCheckCallbacks.get(
+      statsDataId
+    ) || [];
+
+  relationCheckCallbacks.delete(
+    statsDataId
+  );
+
+  for (const callback of callbacks) {
+    callback(hasRelations);
+  }
 }
 
 async function openDrawer(statsDataId) {

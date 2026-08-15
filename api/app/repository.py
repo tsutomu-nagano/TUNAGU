@@ -18,6 +18,43 @@ DEFAULT_REASONS = {
 
 class RelationRepository:
 
+    def exists_by_statinfids(
+        self,
+        statinfids: list[str],
+    ) -> dict[str, bool]:
+        unique_statinfids = list(dict.fromkeys(statinfids))
+
+        if not unique_statinfids:
+            return {}
+
+        with psycopg.connect(row_factory=dict_row) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT
+                      source.statinfid,
+                      EXISTS (
+                        SELECT 1
+                        FROM file_relations AS target
+                        WHERE target.key_hash = source.key_hash
+                      ) AS has_relations
+                    FROM file_relations AS source
+                    WHERE source.statinfid = ANY(%s)
+                    GROUP BY source.statinfid, source.key_hash
+                    """,
+                    (unique_statinfids,),
+                )
+
+                results = {
+                    row["statinfid"]: bool(row["has_relations"])
+                    for row in cursor.fetchall()
+                }
+
+        return {
+            statinfid: results.get(statinfid, False)
+            for statinfid in unique_statinfids
+        }
+
     def find_related(
         self,
         statinfid: str,
@@ -81,6 +118,5 @@ class RelationRepository:
                     )
                     for relation_type, related in grouped.items()
                 ]
-
 
 

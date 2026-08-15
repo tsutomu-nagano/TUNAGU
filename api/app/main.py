@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 
-from .models import RelationResponse
+from .models import RelationExistsRequest, RelationExistsResponse, RelationExistsItem, RelationResponse
 from .repository import RelationRepository
 
 
@@ -28,7 +28,7 @@ def create_app() -> FastAPI:
         CORSMiddleware,
         allow_origins=[origin.strip() for origin in cors_origins.split(",")],
         allow_credentials=False,
-        allow_methods=["GET"],
+        allow_methods=["GET", "POST"],
         allow_headers=["*"],
     )
 
@@ -41,6 +41,22 @@ def create_app() -> FastAPI:
         return RelationResponse(
             statinfid=statinfid,
             relations=get_repository().find_related(statinfid),
+        )
+
+    @app.post("/v1/stats/relations/exists", response_model=RelationExistsResponse)
+    def get_relation_exists(
+        request: RelationExistsRequest,
+    ) -> RelationExistsResponse:
+        results = get_repository().exists_by_statinfids(request.statinfids)
+
+        return RelationExistsResponse(
+            items=[
+                RelationExistsItem(
+                    statinfid=statinfid,
+                    has_relations=has_relations,
+                )
+                for statinfid, has_relations in results.items()
+            ],
         )
 
     @app.get("/v1/stats/{statinfid}/relations/{relation_type}", response_model=RelationResponse)

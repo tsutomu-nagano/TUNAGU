@@ -58,6 +58,12 @@
   width: 14px;
 }
 
+.tunagu-related-button-slot {
+  display: inline-flex;
+  min-height: 0;
+  vertical-align: middle;
+}
+
 .tunagu-page-overlay {
   background: rgba(15, 23, 42, 0.34);
   inset: 0;
