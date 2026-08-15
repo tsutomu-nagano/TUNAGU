@@ -734,7 +734,8 @@ function renderRelations(
             (group, index) =>
               renderRelationPanel(
                 group,
-                index === 0
+                index === 0,
+                statsDataId
               )
           )
           .join("")}
@@ -884,7 +885,8 @@ function renderRelationTab(
 
 function renderRelationPanel(
   group,
-  isActive
+  isActive,
+  currentStatsDataId
 ) {
   const meta =
     relationMeta[group.type] ||
@@ -972,7 +974,8 @@ function renderRelationPanel(
             ${group.items
               .map((item) =>
                 renderRelationRow(
-                  item
+                  item,
+                  currentStatsDataId
                 )
               )
               .join("")}
@@ -983,14 +986,24 @@ function renderRelationPanel(
   `;
 }
 
-function renderRelationRow(item) {
+function renderRelationRow(
+  item,
+  currentStatsDataId
+) {
   const statinfid =
     item.statinfid ||
     item.stats_data_id ||
     "";
 
+  const isCurrent =
+    statinfid === currentStatsDataId;
+
   return `
-    <tr class="tunagu-relation-row">
+    <tr class="tunagu-relation-row${
+      isCurrent
+        ? " is-current"
+        : ""
+    }">
       <td>
         <label class="tunagu-select-control">
           <input
@@ -1012,6 +1025,11 @@ function renderRelationRow(item) {
         ${escapeHtml(
           statinfid
         )}
+        ${
+          isCurrent
+            ? '<span class="tunagu-current-badge">現在表示中</span>'
+            : ""
+        }
       </td>
 
       <td class="tunagu-survey-date-cell">
