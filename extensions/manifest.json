@@ -3,13 +3,18 @@
   "name": "TUNAGU e-Stat Helper",
   "version": "0.1.0",
   "description": "e-Stat の統計データに関連データ表示とまとめてダウンロード導線を追加します。",
+  "icons": {
+    "16": "src/resources/icon16.png",
+    "48": "src/resources/icon48.png",
+    "128": "src/resources/icon128.png"
+  },
   "permissions": ["storage"],
   "host_permissions": ["https://www.e-stat.go.jp/*", "http://localhost:8000/*"],
   "content_scripts": [
     {
       "matches": ["https://www.e-stat.go.jp/*"],
-      "js": ["content.js"],
-      "css": ["content.css"],
+      "js": ["src/content.js"],
+      "css": ["src/content.css"],
       "run_at": "document_idle"
     }
   ]
