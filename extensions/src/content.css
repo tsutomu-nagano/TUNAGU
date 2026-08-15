@@ -4,16 +4,16 @@
   gap: 8px;
   position: relative;
   z-index: 2147483646;
-  margin: 12px 0;
+  margin: 0;
   border: 0;
   border-radius: 6px;
   background: #0b6bcb;
   color: #fff;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1;
-  padding: 10px 14px;
+  padding: 0px 8px;
 }
 
 .tunagu-related-button svg,
@@ -45,8 +45,17 @@
 }
 
 .tunagu-related-cell .tunagu-related-button {
+  border-radius: 4px;
+  font-size: 12px;
+  gap: 5px;
+  min-height: 24px;
   margin: 0;
-  padding: 8px 10px;
+  padding: 4px 8px;
+}
+
+.tunagu-related-cell .tunagu-related-button svg {
+  height: 14px;
+  width: 14px;
 }
 
 .tunagu-page-overlay {
