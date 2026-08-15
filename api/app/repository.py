@@ -34,7 +34,6 @@ class RelationRepository:
                         JOIN file_relations AS target
                           ON target.key_hash = source.key_hash
                         WHERE source.statinfid = %s
-                          AND target.statinfid <> source.statinfid
                         ORDER BY target.relation_type, target.seq_no
                         """,
                         (statinfid,),
@@ -48,7 +47,6 @@ class RelationRepository:
                           ON target.key_hash = source.key_hash
                         WHERE source.statinfid = %s
                           AND source.relation_type = %s
-                          AND target.statinfid <> source.statinfid
                         ORDER BY target.seq_no
                         """,
                         (statinfid, relation_type),
